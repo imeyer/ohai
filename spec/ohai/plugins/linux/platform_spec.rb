@@ -28,7 +28,8 @@ describe Ohai::System, "Linux plugin platform" do
     @ohai[:lsb] = Mash.new
     File.stub!(:exists?).with("/etc/debian_version").and_return(false)
     File.stub!(:exists?).with("/etc/redhat-release").and_return(false)
-    File.stub!(:exists?).with("/etc/gentoo-release").and_return(false)
+    File.stub!(:exists?).with("/etc/redhat-release").and_return(false)
+    File.stub!(:exists?).with("/etc/fedora-release").and_return(false)
   end
   
   it "should require the lsb plugin" do
@@ -77,5 +78,52 @@ describe Ohai::System, "Linux plugin platform" do
 
   end
 
-      
-end  
+  describe "on redhat" do
+    before(:each) do
+      @ohai.lsb = nil
+      File.should_receive(:exists?).with("/etc/redhat-release").and_return(true)
+    end
+    
+    it "should check for the existance of redhat-release" do
+      @ohai._require_plugin("linux::platform")
+    end
+    
+    it "should read the version as Rawhide from /etc/redhat-release" do
+      File.should_receive(:read).with("/etc/redhat-release").and_return("Rawhide")
+      @ohai._require_plugin("linux::platform")
+      @ohai[:platform_version].should == "rawhide"
+    end
+    
+    it "should read the version as 5.3 from /etc/redhat-release" do
+      File.should_receive(:read).with("/etc/redhat-release").and_return("release 5.3")
+      @ohai._require_plugin("linux::platform")
+      @ohai[:platform_version].should == "5.3"
+    end
+  end
+  
+  describe "on fedora" do
+    before(:each) do
+      @ohai.lsb = nil
+      File.should_receive(:exists?).with("/etc/redhat-release").and_return(true)
+      File.should_receive(:exists?).with("/etc/fedora-release").and_return(true)
+    end
+    
+    it "should check for the existence of fedora-release" do
+      @ohai._require_plugin("linux::platform")
+    end
+    
+    it "should read the version as Rawhide from /etc/fedora-release" do
+      File.should_receive(:read).with("/etc/fedora-release").and_return("Fedora release 13 (Rawhide)")
+      @ohai._require_plugin("linux::platform")
+      @ohai[:platform_version].should == "rawhide"
+    end
+    
+    it "should read the version as 10 from /etc/fedora-release" do
+      File.should_receive(:read).with("/etc/fedora-release").and_return("release 10")
+      @ohai._require_plugin("linux::platform")
+      @ohai[:platform_version].should == "10"
+    end
+    
+  end
+end
+

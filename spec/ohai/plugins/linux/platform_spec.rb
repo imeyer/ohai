@@ -78,52 +78,30 @@ describe Ohai::System, "Linux plugin platform" do
 
   end
 
-  describe "on redhat" do
+  describe "on arch" do
     before(:each) do
       @ohai.lsb = nil
-      File.should_receive(:exists?).with("/etc/redhat-release").and_return(true)
+      File.should_receive(:exists?).with("/etc/arch-release").and_return(true)
     end
-    
-    it "should check for the existance of redhat-release" do
-      @ohai._require_plugin("linux::platform")
-    end
-    
-    it "should read the version as Rawhide from /etc/redhat-release" do
-      File.should_receive(:read).with("/etc/redhat-release").and_return("Rawhide")
-      @ohai._require_plugin("linux::platform")
-      @ohai[:platform_version].should == "rawhide"
-    end
-    
-    it "should read the version as 5.3 from /etc/redhat-release" do
-      File.should_receive(:read).with("/etc/redhat-release").and_return("release 5.3")
-      @ohai._require_plugin("linux::platform")
-      @ohai[:platform_version].should == "5.3"
-    end
-  end
-  
-  describe "on fedora" do
-    before(:each) do
-      @ohai.lsb = nil
-      File.should_receive(:exists?).with("/etc/redhat-release").and_return(true)
-      File.should_receive(:exists?).with("/etc/fedora-release").and_return(true)
-    end
-    
-    it "should check for the existence of fedora-release" do
-      @ohai._require_plugin("linux::platform")
-    end
-    
-    it "should read the version as Rawhide from /etc/fedora-release" do
-      File.should_receive(:read).with("/etc/fedora-release").and_return("Fedora release 13 (Rawhide)")
-      @ohai._require_plugin("linux::platform")
-      @ohai[:platform_version].should == "rawhide"
-    end
-    
-    it "should read the version as 10 from /etc/fedora-release" do
-      File.should_receive(:read).with("/etc/fedora-release").and_return("release 10")
-      @ohai._require_plugin("linux::platform")
-      @ohai[:platform_version].should == "10"
-    end
-    
-  end
-end
 
+    it "should set platform to arch" do
+      @ohai._require_plugin("linux::platform")
+      @ohai[:platform].should == "arch"
+    end
+  end
+
+  describe "on centos" do
+    before do
+      @ohai.lsb = nil
+      File.should_receive(:exists?).with("/etc/redhat-release").and_return(true)
+    end
+
+    it "sets the platform to centos on CentOS" do
+      File.should_receive(:open).with("/etc/redhat-release").and_return(["CentOS release 5.1"])
+      @ohai._require_plugin("linux::platform")
+      @ohai[:platform].should == "centos"
+    end
+
+  end
+
+end  
